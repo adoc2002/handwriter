@@ -316,6 +316,7 @@ get_centroid_info = function(character, img_dim)
 #' @export
 
 extract_character_features = function(character_lists,img_dim){
+  cat("extracting features..\n")
   #i strongly believe line based features are useful too
   #nic take a look at this:http://old.cescg.org/CESCG-2008/papers/BratislavaC-Bozekova-Miroslava.pdf 
   character_features = list()
@@ -327,6 +328,7 @@ extract_character_features = function(character_lists,img_dim){
   
   character_features = add_line_info(character_features,img_dim)
   character_features = nov_neighboring_char_dist(character_features)
+  cat("features have been extracted!\n")
   return(character_features)
 }
 
