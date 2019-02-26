@@ -207,7 +207,7 @@ i_to_rci = function(nodes, dims, fixed = FALSE)
 {
   cs = (nodes-1)%/%dims[1] + 1
   rs = (nodes-1)%%dims[1] + 1
-  if(fixed) rs = dims[[1]] - rs
+  if(fixed) rs = dims[1] - rs + 1
   rowcolmatrix = matrix(c(rs,cs,nodes), ncol = 3)
   colnames(rowcolmatrix) = c('y','x','index')
   return(rowcolmatrix)
@@ -228,7 +228,7 @@ i_to_rci = function(nodes, dims, fixed = FALSE)
 rc_to_i = function(row_y,col_x,img_dim, fixed = FALSE)
 {
   row_y = as.integer(row_y)
-  if(fixed) row_y = img_dim[[1]] - row_y
+  if(fixed) row_y = img_dim[1] - row_y + 1
   col_x = as.integer(col_x)
   return((col_x-1)*img_dim[1]+row_y)
 }
@@ -236,6 +236,10 @@ rc_to_i = function(row_y,col_x,img_dim, fixed = FALSE)
 #' get_aspect_info
 #'
 #' Extracts aspect ratio & supporting information from a character
+#' Relevant Features:
+#' Aspect Ratio: Row (Height) over (Column Width) //Determined after a meeting, can easily be switched around)
+#' Height, Width (Each measure of pixels)
+#' The rest are supporting features that are minor independently. 
 #' @param character character to extract information from
 #' @param img_dim Dimensions of binary image
 #' @keywords aspect, ratio, character, width, height
@@ -249,8 +253,8 @@ get_aspect_info = function(character, img_dim)
   rowcol = i_to_rci(character,img_dim)
   rows_y = rowcol[,'y'] 
   cols_x = rowcol[,'x']
-  row_dist = max(rows_y) - min(rows_y) #vertical distance
-  col_dist = max(cols_x) - min(cols_x) #horizontal distance
+  row_dist = max(rows_y) - min(rows_y) + 1 #vertical distance
+  col_dist = max(cols_x) - min(cols_x) + 1 #horizontal distance
   aspect_info = list(aspect_ratio = row_dist/col_dist,height = row_dist, width = col_dist,topmost_row = min(rows_y),bottom_row = max(rows_y),leftmost_col=min(cols_x),rightmost_col=max(cols_x))
   return(aspect_info)
 }
@@ -258,6 +262,15 @@ get_aspect_info = function(character, img_dim)
 #' get_centroid_info
 #'
 #' Extracts centroid & supporting information from a character
+#' Relevant Features:
+#' Centroid Index: R Index representation of centroid location
+#' Centroid x,y: X,Y representations of the centroid, see ?i_to_rci (Written by Nick)
+#' Centroid Horiz Location: How far along horizontally (Represented as a number between 0 and 1) the centroid is in its respective character.
+#' Centroid Vertical Location: How far along vertically (Represented as a number between 0 and 1) the centroid is in its respective character.
+#' Slope: 'Letter Lean', slope found between the centroids of each disjoint half in a single character.
+#' The letter is split in half, each halve's centroid is calculated independently, the slope is taken between the two. 
+#' Box Density: (Dimensions of box around letter width height) / (how much of the document it covers) //Might be a more document as opposed to letter based feature
+#' Pixel Density: Ratio of black to white pixels found in box drawn around the letter.
 #' @param character character to extract information from
 #' @param img_dim Dimensions of binary image
 #' @keywords centroid, skew, slant, lean, character
@@ -272,8 +285,8 @@ get_centroid_info = function(character, img_dim)
   cols_x = rowcol[,'x']
   centroid_row = mean(rows_y)
   centroid_col = mean(cols_x)
-  row_dist = max(rows_y) - min(rows_y) #vertical distance
-  col_dist = max(cols_x) - min(cols_x) #horizontal distance
+  row_dist = max(rows_y) - min(rows_y) + 1 #vertical distance
+  col_dist = max(cols_x) - min(cols_x) + 1 #horizontal distance
   centroid_index = rc_to_i(centroid_row,centroid_col,img_dim)
   
   #relative density: draw a box around the letter, ratio of black to white pixels in the box
@@ -284,10 +297,10 @@ get_centroid_info = function(character, img_dim)
   #centroid_horiz_location = (min(cols_x)+(centroid_col-min(cols_x))) / col_dist
   #centroid_vert_location = (min(rows_y)+(centroid_row-min(rows_y))) / row_dist
   
-  centroid_horiz_location = (centroid_col-min(cols_x)) / col_dist
-  centroid_vert_location = (centroid_row-min(rows_y)) / row_dist
+  centroid_horiz_location = (centroid_col-min(cols_x) + 1) / col_dist
+  centroid_vert_location = (centroid_row-min(rows_y) + 1) / row_dist
   #used for getting skew, assuming centroid is more middle than the median col_x
-  #probably can be removed, I just want nic to be able to plot them to determine if its an appropriate 'split' in the grapheme
+  #probably can be removed, I just want nic to be able to plot them to determine if its an appropriate 'split' in the letter
   lHalf = list(rows_y = rows_y[which(cols_x<centroid_col)],cols_x = cols_x[which(cols_x<centroid_col)])
   rHalf = list(rows_y = rows_y[which(cols_x>centroid_col)],cols_x = cols_x[which(cols_x>centroid_col)])
   lHalfCentroidrc = list(y=mean(lHalf$rows_y),x=mean(lHalf$cols_x))
@@ -299,9 +312,13 @@ get_centroid_info = function(character, img_dim)
   rHi = rc_to_i(rHalf$rows_y,rHalf$cols_x,img_dim)
   #finding slope, in case of long letters like e in csafe maybe account length?
   #errrrr does the y need a +1
-  slope = ((img_dim[1] - rHalfCentroidrc$y)-(img_dim[1] - lHalfCentroidrc$y))/(rHalfCentroidrc$x-lHalfCentroidrc$x)
+  slope = ((img_dim[1] - rHalfCentroidrc$y)-(img_dim[1] - lHalfCentroidrc$y))/(rHalfCentroidrc$x-lHalfCentroidrc$x+1)
+  if(length(lHalf[[1]]) == 0 & length(rHalf[[1]]) == 0)
+  {
+    slope = 0
+  }
   lHalfCentroid = rc_to_i(mean(lHalf$rows_y),mean(lHalf$cols_x),img_dim)
-  centroid_info = list(centroid_index = centroid_index, centroid_y = centroid_row, centroid_x = centroid_col, centroid_horiz_location = centroid_horiz_location,centroid_vert_location = centroid_vert_location,lHalf = lHi,rHalf=rHi,disjoint_centroids = list(left = lHalfCentroidi,right = rHalfCentroidi),slope = slope, pixel_density = r_density,box_density = box_density )
+  centroid_info = list(centroid_index = centroid_index, centroid_y = centroid_row, centroid_x = centroid_col, centroid_horiz_location = centroid_horiz_location,centroid_vert_location = centroid_vert_location,lHalf = lHi,rHalf=rHi,disjoint_centroids = list(left = lHalfCentroidi,right = rHalfCentroidi),slope = slope, pixel_density = r_density,box_density = box_density)
   return(centroid_info)
 }
 
@@ -309,7 +326,11 @@ get_centroid_info = function(character, img_dim)
 #'
 #' Primary driver of feature extraction. 
 #' Parses all characters from a processed image.
-#' @param character_lists Output from processHandwriting$graphemeLists
+#' For information detailing each feature, please see
+#' ?get_aspect_info
+#' ?get_centroid_info
+#' ?get_loop_info
+#' @param character_lists Output from processHandwriting$letterLists
 #' @param img_dim Dimensions of binary image
 #' @keywords centroid, skew, slant, lean, character
 #' @return nested lists associating features to respective characters.
@@ -365,11 +386,12 @@ char_to_feature = function(character, img_dim, uniqueid){
 
 add_line_info = function(character_features,img_dim){
   line_info = line_number_extract(all_centroids(character_features),img_dim)
+  line_order = lapply(line_info, sort)
   for(i in 1:length(character_features)){
-    cur_grapheme_index = character_features[[i]]$centroid_index
+    cur_letter_index = character_features[[i]]$centroid_index
     for(j in 1:length(line_info)){
-      if(cur_grapheme_index %in% line_info[[j]]){
-        character_features[[i]] = c(character_features[[i]],list(line_number = j))
+      if(cur_letter_index %in% line_info[[j]]){
+        character_features[[i]] = c(character_features[[i]],list(line_number = j, order_within_line = which(line_order[[j]] == cur_letter_index)))
       }
     }
   }
@@ -395,9 +417,13 @@ lm_rm_nodes = function(character){
 #' get_loop_info
 #'
 #' Associator of loop to character association
-#' Volatile, likely won't live for long
-#' as Nick and I transition to moving the primary 
-#' loop driver out of JunctionDetection.R
+#' Relevant Features:
+#' Loop Count, how many loops are found in the letter
+#' Loop Major, length of farthest line that can be drawn inside of a loop
+#' Loop Minor, length of the perpindcular bisector of the loop major.
+#' ! I've removed loop minor / loop major features due to instability during testing.
+#' The outliers were frequent enough to deem my implementation unreliable for modeling.
+#' I need additional help in some of the syntactical challenges I've experienced with those features..
 #' @param character Target for loop association
 #' @param img_dim Dimensions of binary image
 #' @keywords character, loop, associate
@@ -414,7 +440,7 @@ get_loop_info = function(character,img_dim){
 
 #probably garbage
 neighboring_char_dist = function(character_features){
-  graphemeDist = list()
+  letterDist = list()
   for(i in 1:length(character_features)){
     dist_left = NULL
     dist_right = NULL
@@ -438,9 +464,9 @@ neighboring_char_dist = function(character_features){
     if(is.null(dist_right)){
       dist_right = next_lm - cur_rm
     }
-    graphemeDist = c(graphemeDist,list(dist_left,dist_right))
+    letterDist = c(letterDist,list(dist_left,dist_right))
   }
-    return(graphemeDist)
+    return(letterDist)
 }
 
 # Principle: Appending inside of a nested loop
@@ -505,7 +531,7 @@ byline_x_print = function(characters_by_line){
 #'
 #' Iterates through all avaiable paths from processHandwriting()
 #' Picks out loops for later character association.
-#' @param allPaths All character (formerly grapheme) paths from processHandwriting()
+#' @param allPaths All character (formerly letter) paths from processHandwriting()
 #' @keywords character, loops, line
 #' @return List of all loops
 #' @export

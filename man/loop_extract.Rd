@@ -7,7 +7,11 @@
 loop_extract(allPaths)
 }
 \arguments{
+<<<<<<< HEAD
 \item{allPaths}{All character (formerly grapheme) paths from processHandwriting()}
+=======
+\item{allPaths}{All character (formerly letter) paths from processHandwriting()}
+>>>>>>> master
 }
 \value{
 List of all loops

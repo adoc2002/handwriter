@@ -7,7 +7,11 @@
 extract_character_features(character_lists, img_dim)
 }
 \arguments{
+<<<<<<< HEAD
 \item{character_lists}{Output from processHandwriting$graphemeLists}
+=======
+\item{character_lists}{Output from processHandwriting$letterLists}
+>>>>>>> master
 
 \item{img_dim}{Dimensions of binary image}
 }
@@ -17,6 +21,13 @@ nested lists associating features to respective characters.
 \description{
 Primary driver of feature extraction. 
 Parses all characters from a processed image.
+<<<<<<< HEAD
+=======
+For information detailing each feature, please see
+?get_aspect_info
+?get_centroid_info
+?get_loop_info
+>>>>>>> master
 }
 \keyword{centroid,}
 \keyword{character}
