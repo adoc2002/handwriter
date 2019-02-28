@@ -18,13 +18,13 @@ function(msg=""){
 function(img_name, debug = FALSE){
   #dependencies, todo: add conditional to check if first time server init
   test_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/"
-  dt_test_path = "/home/esc/git_repos/csafe/handwriter_webapp/uploads/"
+  dt_test_path = "/home/ben/git_repos/csafe/handwriter_webapp/uploads/"
   library(handwriter)
   library(ggplot2)
   #library(reticulate)
   library(reshape2)
   library(igraph)
-  img_path = paste0(dt_test_path,img_name)
+  img_path = paste0(test_path,img_name)
   #setwd(test_path)
   img_binary = readPNGBinary(img_path)
   img_thinned = thinImage(img_binary)
