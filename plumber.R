@@ -32,7 +32,8 @@ plumbt = function(img_name, debug = FALSE){
   cat('finished processing\n')
   cat('update to character features.. enumerating now...\n');
   #rename to character
-  img_features = AddLetterImages(img_processed$letterList,dim(img_thinned))
+  img_li = AddLetterImages(img_processed$letterList,dim(img_thinned))
+  img_features = gatherFeaturesImages(img_li)
   cat('processing has been finished, should be trying to push to node server')
   list(img_features)
 }
@@ -52,7 +53,7 @@ gatherFeaturesImages = function(processed_image){
     cur = processed_image[[i]]$characterFeatures
     image = processed_image[[i]]$image
     #why does R like implicitly breaking structures
-    cur = c(cur,imageSingle = list(imageSingle))
+    cur = c(cur,imageSingle = list(image))
     cur = c(cur,letterCode = processed_image[[i]]$letterCode)
     featureList = append(featureList,list(cur))
   }
