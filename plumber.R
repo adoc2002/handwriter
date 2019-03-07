@@ -19,21 +19,26 @@ plumbt = function(img_name, debug = FALSE){
   #dependencies, todo: add conditional to check if first time server init
   test_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/"
   dt_test_path = "/home/ben/git_repos/csafe/handwriter_webapp/uploads/"
+  letter_plots_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/LetterPlots/"
   library(handwriter)
   library(ggplot2)
   #library(reticulate)
+  library(magick)
   library(reshape2)
   library(igraph)
   img_path = paste0(test_path,img_name)
+  lp_dir = paste0(letter_plots_path,img_name)
   #setwd(test_path)
   img_binary = readPNGBinary(img_path)
   img_thinned = thinImage(img_binary)
   img_processed = processHandwriting(img_thinned,dim(img_binary))
   cat('finished processing\n')
-  cat('update to character features.. enumerating now...\n');
-  #rename to character
-  img_li = AddLetterImages(img_processed$letterList,dim(img_thinned))
-  img_features = gatherFeaturesImages(img_li)
+  cat('compiling letter features...\n');
+  img_features = gatherFeaturesImages(img_processed$letterList)
+  cat('saving individual letter plots..\n')
+  dir.create(lp_dir)
+  lp_dir = paste0(lp_dir,"/")
+  SaveAllLetterPlots(img_processed$letterList,lp_dir,dim(img_binary),bgTransparent = FALSE)
   cat('processing has been finished, should be trying to push to node server')
   list(img_features)
 }
@@ -46,14 +51,15 @@ plumbt = function(img_name, debug = FALSE){
 #    return(lm_rm_nodelist)
 #  }
 
-#processed image -> AddLetterImages -> old structure with inclusion of image
+
+#img_processed$letterList should be arg, seperates features..
 gatherFeaturesImages = function(processed_image){
   featureList = list()
   for(i in 1:length(processed_image)){
     cur = processed_image[[i]]$characterFeatures
-    image = processed_image[[i]]$image
+    #image = processed_image[[i]]$image
     #why does R like implicitly breaking structures
-    cur = c(cur,imageSingle = list(image))
+    #mgcur = c(cur,imageSingle = list(image))
     cur = c(cur,letterCode = processed_image[[i]]$letterCode)
     featureList = append(featureList,list(cur))
   }
