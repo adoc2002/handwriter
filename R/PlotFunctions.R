@@ -35,6 +35,7 @@ plotImage = function(x)
 plotImageThinned = function(img, thinned)
 {
   l.m = melt(img)
+  print(l.m)
   names(l.m) = c("Var1", "Var2", "value")
   l.m$value[thinned] = 2
   p = ggplot(l.m, aes(Var2, rev(Var1))) + geom_raster(aes(fill = as.factor(value), alpha = as.factor(value)), na.rm=TRUE) + scale_alpha_manual(values = c(.1, NA, 1), guide = FALSE) + scale_fill_manual(values = c("black", NA, "black"), guide = FALSE) + coord_fixed() + theme_void()
