@@ -17,14 +17,14 @@ function(msg=""){
 #' @get /plumbFeatures
 plumbt = function(img_name, debug = FALSE){
   
-  test_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/OGImages"
+  test_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/OGImages/"
   
   #for when i work on desktop, honestly my laptop and desktop are too weak for this anymore.
   #dt_test_path = "/home/ben/git_repos/csafe/handwriter_webapp/uploads/"
   
   letter_plots_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/LetterPlots/"
-  thinned_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/ThinImages"
-  ogthinned_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/OGThinImages"
+  thinned_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/ThinImages/"
+  ogthinned_path = "/home/esc/git_repos/fall_18/work/handwriter_webapp/uploads/OGThinImages/"
   #dependencies
   library(handwriter)
   library(ggplot2)
@@ -43,14 +43,16 @@ plumbt = function(img_name, debug = FALSE){
   img_processed = processHandwriting(img_thinned,dim(img_binary))
   cat('finished processing\n')
   cat('compiling letter features...\n');
+  print(img_processed)
   img_features = gatherFeaturesImages(img_processed$letterList)
   cat('saving individual letter plots..\n')
   
   #create directory for individual images
   dir.create(lp_dir)
   lp_dir = paste0(lp_dir,"/")
-  
+  print(str(img_features))
   #save supplementary images
+  print(img_processed$letterList)
   SaveAllLetterPlots(img_processed$letterList,lp_dir,dim(img_binary),bgTransparent = FALSE)
   SaveSupplementaryPlots(img_thinned,thinned_path,img_name,dim(img_binary))
   cat('processing has been finished, should be trying to push to node server')
@@ -105,10 +107,11 @@ SaveAllLetterPlots = function(letterList, filePaths, documentDimensions, bgTrans
 }
 
 SaveSupplementaryPlots = function(thinnedImage, filePath, img_name, documentDimensions, bgTransparent = FALSE){
-  newThinned = maxtrix(1, ncol=documentDimensions(img)[1], nrow=documentDimensions(img)[2])
+  newThinned = matrix(1, ncol=documentDimensions[2], nrow=documentDimensions[1])
   newThinned[thinnedImage] = 0
   img = magick::image_read(as.raster(newThinned))
   if(bgTransparent)
     img = magick::image_transparent(img,"white")
   magick::image_write(path = paste0(filePath,img_name,"_thinned.png"),img)
 }
+
